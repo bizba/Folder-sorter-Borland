@@ -1,10 +1,14 @@
 //---------------------------------------------------------------------------
 
+       /* TODO 1 : use std::vector instead of Array. */
+       /* TODO 2 : compare files with equal size (first 12 bytes and 12 random bytes) */
+
 #include <vcl.h>
 #include <dirent.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <vector>
 
 #include "filestruc.h"
 #pragma hdrstop
@@ -14,7 +18,10 @@
 #pragma package(smart_init)
 #pragma resource "*.dfm"
 
-filestruc files_mas[10000];
+//filestruc files_mas[10000];
+std::vector<filestruc> v;
+
+
 int mi;
 
 void fsize(char *);
@@ -34,7 +41,11 @@ void __fastcall TForm1::Button1Click(TObject *Sender)
     // просмотр дирректории
     ListBox1->Clear();
     ListBox2->Clear();
-    
+
+    v.clear();
+    v.begin();
+    mi = 0;
+
     fsize(mDir->Text.c_str());
     sort_file_mas();
     NumberStr->Caption = IntToStr(ListBox1->Count);
@@ -46,6 +57,7 @@ void dirwalk(char *, void (*fcn) (char *));
 void fsize(char *name)
 {
     struct stat stbuf;
+    filestruc files_mas;
 
     if (stat(name, &stbuf) == -1)
     {
@@ -57,8 +69,11 @@ void fsize(char *name)
     if ((stbuf.st_mode & S_IFMT) == S_IFDIR)
         dirwalk(name, fsize);
 
-    sprintf(files_mas[mi].name, "%s", name);
-    files_mas[mi].size = stbuf.st_size;
+    sprintf(files_mas.name, "%s", name);
+    files_mas.size = stbuf.st_size;
+
+    v.push_back(files_mas);
+
     mi++;
     //printf ("%8ld %s\n", stbuf.st_size, name);
 }
@@ -94,17 +109,17 @@ int sort_file_mas()
 	int sum = 0;
         AnsiString str;
 
-	for (j=0; j<mi-1; j++ )
+	for (j = 0; j < (int)v.size()-1; j++)
 	{
-		for (a=j+1; a<mi; a++)
+		for (a=j+1; a < (int)v.size (); a++)
 		{
-			if (files_mas[j].size != 0 && files_mas[j].size == files_mas[a].size)
+			if (v[j].size != 0 && v[j].size == v[a].size)
 			{
 				sum++;
 
-                                str = files_mas[a].name;
+                                str = v[a].name;
                                 Form1->ListBox1->Items->Add(str);
-                                str = files_mas[j].name;
+                                str = v[j].name;
                                 Form1->ListBox2->Items->Add(str);
 
 			}
@@ -168,6 +183,14 @@ void __fastcall TForm1::Button3Click(TObject *Sender)
     {
         remove(FName2->Caption.c_str());
     }
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::Button4Click(TObject *Sender)
+{
+  AnsiString str;
+  str = v[1].name;
+  ShowMessage(str);
 }
 //---------------------------------------------------------------------------
 
